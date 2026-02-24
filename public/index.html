@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Slack通知</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: #f5f5f5;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+      padding: 2rem;
+      width: 100%;
+      max-width: 480px;
+    }
+    h1 { font-size: 1.4rem; margin-bottom: 1.2rem; }
+    textarea {
+      width: 100%;
+      height: 100px;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+      resize: vertical;
+    }
+    textarea:focus { outline: none; border-color: #4A154B; }
+    button {
+      margin-top: 1rem;
+      width: 100%;
+      padding: 0.75rem;
+      background: #4A154B;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button:hover { background: #611f69; }
+    button:disabled { background: #999; cursor: not-allowed; }
+    .result {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+    .result.ok { background: #e8f5e9; color: #2e7d32; }
+    .result.err { background: #fce4ec; color: #c62828; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Slack通知送信</h1>
+    <textarea id="msg" placeholder="送信するメッセージを入力"></textarea>
+    <button id="btn">送信</button>
+    <div id="result"></div>
+  </div>
+  <script>
+    const btn = document.getElementById("btn");
+    const msg = document.getElementById("msg");
+    const result = document.getElementById("result");
+
+    btn.addEventListener("click", async () => {
+      const q = msg.value.trim();
+      if (!q) return;
+
+      btn.disabled = true;
+      btn.textContent = "送信中…";
+      result.className = "result";
+      result.textContent = "";
+
+      try {
+        const res = await fetch(`/api/notify?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+
+        if (res.ok) {
+          result.className = "result ok";
+          result.textContent = "送信しました";
+          msg.value = "";
+        } else {
+          result.className = "result err";
+          result.textContent = `エラー: ${data.error}`;
+        }
+      } catch (e) {
+        result.className = "result err";
+        result.textContent = `通信エラー: ${e.message}`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "送信";
+      }
+    });
+  </script>
+</body>
+</html>
